@@ -1,3 +1,5 @@
 .venv
 *.pt
 *.jpg
+labelImg-master
+datasets
