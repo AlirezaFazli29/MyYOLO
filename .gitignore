@@ -3,3 +3,5 @@
 *.jpg
 labelImg-master
 datasets
+runs
+__pycache__
