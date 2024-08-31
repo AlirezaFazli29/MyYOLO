@@ -50,7 +50,7 @@ async def upload_n_process(conf: float=0.2 ,file: UploadFile = File(...)):
     byte_data = await file.read()
     img = process_img(byte_data)
     img_arr = np.array(img)
-    resized_img = resize(img_arr, 500)
+    resized_img = resize(img_arr, 800)
     result = run_yolo(resized_img, conf=conf)
     return StreamingResponse(result, media_type='image/jpeg')
 
