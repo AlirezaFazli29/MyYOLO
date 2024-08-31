@@ -6,6 +6,7 @@ import io
 from PIL import Image
 import cv2
 import numpy as np
+import base64
 
 
 app = FastAPI()
@@ -54,6 +55,34 @@ async def upload_n_process(conf: float=0.2 ,file: UploadFile = File(...)):
     result = run_yolo(resized_img, conf=conf)
     return StreamingResponse(result, media_type='image/jpeg')
 
+@app.post('/uoload_/{conf}')
+async def upload_n_process_(conf: float=0.2 ,file: UploadFile = File(...)):
+    byte_data = await file.read()
+    img = process_img(byte_data)
+    img_arr = np.array(img)
+    resized_img = resize(img_arr, 800)
+    
+    results = model(resized_img, conf=conf)
+    bgr_img = results[0].plot()
+    rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+    _, encoded_img = cv2.imencode('.jpg', rgb_img)
+    img_bytes = encoded_img.tobytes()
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')    
+
+    bounding_boxes = []
+    for r in results:
+        for box in r.boxes:
+            bounding_boxes.append({
+                'x1': int(box.xyxy[0][0]),
+                'y1': int(box.xyxy[0][1]),
+                'x2': int(box.xyxy[0][2]),
+                'y2': int(box.xyxy[0][3]),
+                'confidence': float(box.conf[0]),
+                'class': r.names[int(box.cls[0])]
+            })
+
+    return {'image': img_base64,
+            'BBs': bounding_boxes}
 
 # UPLOAD_DIRECTORY = "./uploaded_images"
 
