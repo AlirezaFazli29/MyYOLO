@@ -6,7 +6,6 @@ import io
 from PIL import Image
 import cv2
 import numpy as np
-import base64
 
 
 app = FastAPI()
