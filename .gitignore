@@ -5,7 +5,6 @@ labelImg-master
 datasets
 runs
 __pycache__
-weights
 *.txt
 !requirements.txt
 !tree.txt
