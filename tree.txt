@@ -1,0 +1,11 @@
+/services
+    ├── /image_handler       
+    │   ├── __init__.py      
+    │   ├── image_handler.py 
+    │   └── utils.py         
+    │
+    └── /ai_services         
+        ├── __init__.py      
+        ├── model_loader.py  
+        ├── yolo_inference.py 
+        └── utils.py        
