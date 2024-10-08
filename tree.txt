@@ -5,8 +5,8 @@
     │
     └── /ai_services         
         ├── __init__.py      
-        ├── models.py  
-        ├── yolo_inference.py 
+        ├── models.py
+        ├── model_handler.py  
         └── utils.py        
 
 /weights

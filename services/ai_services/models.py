@@ -19,7 +19,7 @@ class YOLOv8(BaseModel):
             YOLO: The initialized YOLO model instance.
         """
 
-        print(f"Loading YOLO model from {self.model_path} ...")
+        print(f"Loading YOLO model from {self.model_path.value} ...")
         if isinstance(self.model_path, (YoloType.Pretrained ,YoloType.Custom)):
             yolo = YOLO(model=self.model_path.value)
         else:
