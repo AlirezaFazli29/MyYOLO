@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 from services.image_handler.utils import crop_image
 
 
@@ -61,7 +62,7 @@ class YOLOInference():
         bb = [None] * len(results)
         for i, result in enumerate(results):
             bb[i] = self.extract_image_bounding_boxes(result)
-        return np.array(bb)
+        return bb
 
     def crop_image_bounding_boxes(self, bounding_box_array, image):
         """
@@ -98,7 +99,12 @@ class YOLOInference():
             else: cropped_images += cropped
         return cropped_images
     
-    def run_full_pipeline(self, images, conf=0.5, show=False, save=False):
+    def batch_images(self, images, batch_size=16):
+        """Split images into batches."""
+        for i in range(0, len(images), batch_size):
+            yield images[i:i+batch_size]  # Yield a batch of images
+
+    def run_full_pipeline(self, images, conf=0.5, show=False, save=False, batch_size=16):
         """
         Run the full pipeline: inference, bounding box extraction, and cropping images.
         
@@ -114,12 +120,17 @@ class YOLOInference():
         if isinstance(images, np.ndarray):
             # Single image pipeline
             images = [images]  # Convert single image to list format
-
+        
         print("Running full pipeline... \n")
-        results = self.run_inference(images, conf=conf, show=show, save=save)
-        print("Yolo results are generated \n")
-        bounding_boxes = self.extract_results_bounding_boxes(results)
-        print("Found Bounding Boxes")
-        cropped_images = self.crop_results_bounding_boxes(bounding_boxes, images)
-        print("Images are cropped \n")
+        cropped_images = []
+
+        for i, batch in enumerate(self.batch_images(images, batch_size)):
+            results = self.run_inference(batch, conf=conf, show=show, save=save)
+            print(f"Yolo results are generated for batch {i} \n")
+            bounding_boxes = self.extract_results_bounding_boxes(results)
+            print("Found Bounding Boxes")
+            batch_cropped_images = self.crop_results_bounding_boxes(bounding_boxes, batch)
+            print("Images were cropped \n")
+            cropped_images.extend(batch_cropped_images)
+        print("All images were cropped successfully")
         return cropped_images
