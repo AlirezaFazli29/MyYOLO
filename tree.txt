@@ -4,7 +4,8 @@
     │   └── utils.py         
     │
     └── /ai_services         
-        ├── __init__.py      
+        ├── __init__.py
+        ├── inferences.py      
         ├── models.py
         ├── model_handler.py  
         └── utils.py        
