@@ -6,7 +6,7 @@
     └── /ai_services         
         ├── __init__.py
         ├── inferences.py      
-        ├── models.py
+        ├── my_models.py
         ├── model_handler.py  
         └── utils.py        
 

@@ -19,6 +19,13 @@ class YoloType():
         Plate_best = "weights/best(plate).pt"
 
 
+class ResNetType(Enum):
+    """Enumeration for model types."""
+    Corner_last = 'last_net'
+    Corner_best = 'best_net'
+    Base = 'base'
+
+
 class BaseModel(ABC):
     """
     Base class for models.
@@ -27,7 +34,6 @@ class BaseModel(ABC):
     It defines the required interface that subclasses must implement and provides
     a framework for loading and utilizing machine learning models.
     """
-
     def __init__(self, model_path:YoloType = YoloType.Pretrained.yolov8n):
         """
         Initializes the BaseModel with the given model path.
