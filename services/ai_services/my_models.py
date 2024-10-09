@@ -88,7 +88,7 @@ class CustomResNet(nn.Module):
         x1y1 = self.fc1(x)
         x2y2 = self.fc2(x)
         x3y3 = self.fc3(x)
-        return x0y0, x1y1, x2y2, x3y3
+        return torch.stack([x0y0, x1y1, x2y2, x3y3], dim=1)
 
 
 class Plate_ResNet(BaseModel):

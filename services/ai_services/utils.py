@@ -80,15 +80,15 @@ class CustomResNetDataset(Dataset):
         label = {}
         for i in range(len(raw_lbl)):
             if np.array_equal(x_y[i], [0., 0.]):
-                label["Top Left"] = raw_lbl[i]
+                label["Top Left"] = list(raw_lbl[i])
             elif np.array_equal(x_y[i], [0., 1.]):
-                label["Top Right"] = raw_lbl[i]
+                label["Top Right"] = list(raw_lbl[i])
             elif np.array_equal(x_y[i], [1., 1.]):
-                label["Bottom Right"] = raw_lbl[i]
+                label["Bottom Right"] = list(raw_lbl[i])
             elif np.array_equal(x_y[i], [1., 0.]):
-                label["Bottom Left"] = raw_lbl[i]
+                label["Bottom Left"] = list(raw_lbl[i])
         
-        return image, label
+        return image, torch.tensor([label["Top Left"], label["Top Right"], label["Bottom Right"], label["Bottom Left"]])
     
 
 # def train_custom_resnet():
