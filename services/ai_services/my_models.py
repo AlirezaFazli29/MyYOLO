@@ -194,11 +194,11 @@ class Plate_ResNet(BaseModel):
         """
         print(f"Starting training process for model {self.model_type} ...")
         print(f"Hyper Parameters:")
-        print(f"-Epochs Number = {epochs}")
-        print(f"-Learning Rate = {lr}")
-        print(f"-Weight Decay = {weight_decay}")
-        print(f"-Loss Function = {loss_fn}")
-        print(f"-Optimizer = {torch.optim.Adam(model.parameters(),lr=lr, weight_decay=weight_decay) if None else optimizer} \n")
+        print(f"- Epochs Number = {epochs}")
+        print(f"- Learning Rate = {lr}")
+        print(f"- Weight Decay = {weight_decay}")
+        print(f"- Loss Function = {loss_fn}")
+        print(f"- Optimizer = {torch.optim.Adam(model.parameters(),lr=lr, weight_decay=weight_decay) if None else optimizer} \n")
         training_history = train_custom_resnet(
             model=self.model,
             train_loader=train_loader,
