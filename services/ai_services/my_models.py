@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchinfo import summary
+from .utils import train_custom_resnet
 
 
 
@@ -113,6 +114,7 @@ class Plate_ResNet(BaseModel):
         self.weigths = weigths
         self.device = device
         self.model = self.load_model()
+        self.model_training_history = { 'train_loss' : [], 'valid_loss': []}
 
     def load_model(self):
         """
@@ -160,3 +162,55 @@ class Plate_ResNet(BaseModel):
     def write_summary(self):
         print(f"Model is in {self.device}")
         print(summary(self.model))
+
+    def train(
+        self,
+        train_loader,
+        valid_loader,
+        optimizer=None,
+        lr:float=0.01,
+        weight_decay=0.001,
+        epochs:int=10,
+        loss_fn=torch.nn.MSELoss(),
+        save_parameters=True,
+        save_path:str="./weights"
+    ):
+        """
+        Train the ResNet model using the provided training and validation loaders.
+
+        Parameters:
+        train_loader (torch.utils.data.DataLoader): DataLoader for the training dataset.
+        valid_loader (torch.utils.data.DataLoader): DataLoader for the validation dataset.
+        optimizer (torch.optim.Optimizer, optional): Optimizer for model parameters. If None, a default optimizer is used.
+        lr (float, optional): Learning rate for the optimizer. Defaults to 0.01.
+        weight_decay (float, optional): Weight decay (L2 regularization) parameter for the optimizer. Defaults to 0.001.
+        epochs (int, optional): Number of training epochs. Defaults to 10.
+        loss_fn (torch.nn.Module, optional): Loss function used for training. Defaults to MSELoss.
+        save_parameters (bool, optional): Flag to save model parameters. Defaults to True.
+        save_path (str, optional): Path to save model weights. Defaults to './weights'.
+
+        Returns:
+        None
+        """
+        print(f"Starting training process for model {self.model_type} ...")
+        print(f"Hyper Parameters:")
+        print(f"-Epochs Number = {epochs}")
+        print(f"-Learning Rate = {lr}")
+        print(f"-Weight Decay = {weight_decay}")
+        print(f"-Loss Function = {loss_fn}")
+        print(f"-Optimizer = {torch.optim.Adam(model.parameters(),lr=lr, weight_decay=weight_decay) if None else optimizer} \n")
+        training_history = train_custom_resnet(
+            model=self.model,
+            train_loader=train_loader,
+            valid_loader=valid_loader,
+            optimizer=optimizer,
+            lr=lr,
+            epochs=epochs,
+            loss_fn=loss_fn,
+            device=self.device,
+            save_parameters=save_parameters,
+            save_path=save_path
+        )
+        print("\nTraining completed")
+        self.model_training_history["train_loss"].extend(training_history["train_loss"])
+        self.model_training_history["valid_loss"].extend(training_history["valid_loss"])
