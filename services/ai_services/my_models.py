@@ -5,6 +5,7 @@ import torch.nn as nn
 import torchvision.models as models
 from torchinfo import summary
 from .utils import train_custom_resnet
+import time
 
 
 
@@ -199,6 +200,7 @@ class Plate_ResNet(BaseModel):
         print(f"- Weight Decay = {weight_decay}")
         print(f"- Loss Function = {loss_fn}")
         print(f"- Optimizer = {torch.optim.Adam(model.parameters(),lr=lr, weight_decay=weight_decay) if None else optimizer} \n")
+        start_time = time.time()
         training_history = train_custom_resnet(
             model=self.model,
             train_loader=train_loader,
@@ -212,5 +214,10 @@ class Plate_ResNet(BaseModel):
             save_path=save_path
         )
         print("\nTraining completed")
+        end_time = time.time()
+        execution_time = end_time - start_time
+        minutes = int(execution_time // 60)
+        seconds = execution_time % 60
+        print(f"Training time: {minutes} minutes and {seconds:.2f} seconds")
         self.model_training_history["train_loss"].extend(training_history["train_loss"])
         self.model_training_history["valid_loss"].extend(training_history["valid_loss"])
