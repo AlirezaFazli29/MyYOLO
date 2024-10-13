@@ -21,8 +21,8 @@ class YoloType():
 
 class ResNetType(Enum):
     """Enumeration for model types."""
-    Corner_last = 'last_net'
-    Corner_best = 'best_net'
+    Corner_last = 'weights/last_custom_res.pth'
+    Corner_best = 'weights/last_custom_res.pth'
     Base = 'base'
 
 

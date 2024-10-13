@@ -1,6 +1,9 @@
 import numpy as np
-from tqdm import tqdm
 from services.image_handler.utils import crop_image
+from torchvision.transforms import transforms
+from PIL import Image
+import torch
+import cv2
 
 
 class YOLOInference():
@@ -80,7 +83,6 @@ class YOLOInference():
             cropped[i] = crop_image(image, bb)
         return cropped
 
-
     def crop_results_bounding_boxes(self, results_bounding_boxes, images):
         """
         Crop multiple images using bounding boxes from YOLO inference results.
@@ -121,7 +123,7 @@ class YOLOInference():
             # Single image pipeline
             images = [images]  # Convert single image to list format
         
-        print("Running full pipeline... \n")
+        print("Running full pipeline ... \n")
         cropped_images = []
 
         for i, batch in enumerate(self.batch_images(images, batch_size)):
@@ -134,3 +136,74 @@ class YOLOInference():
             cropped_images.extend(batch_cropped_images)
         print("All images were cropped successfully")
         return cropped_images
+    
+
+class PlateResNetInference():
+    
+    def __init__(self, custom_resnet):
+        self.model = custom_resnet
+
+    def run_inference(self, batch):
+        results = self.model.infer(batch)
+        return results
+    
+    def to_pil(self, image):
+        if isinstance(image, Image.Image):
+            return image
+        elif isinstance(image, np.ndarray):
+            return Image.fromarray(image)
+        elif isinstance(image, torch.Tensor):
+            image = image.permute(1, 2, 0)
+            return Image.fromarray(image.numpy().astype(np.uint8))
+        else:
+            raise TypeError("Input must be a PIL Image, numpy array, or torch tensor.")
+
+    def batch_images(self, images, transformed_images, batch_size=16):
+        """Split images into batches."""
+        for i in range(0, len(images), batch_size):
+            yield images[i:i+batch_size], transformed_images[i:i+batch_size]
+
+    def rectify(self, image:Image.Image, corner_points:np.ndarray):
+        image_width, image_height = np.array(image).shape[:2]
+        dst_points = np.array([[0, 0], [image_width, 0], [image_width, image_height], [0, image_height]], dtype=np.float32)
+        src_points  = corner_points * np.array([image_width, image_height])
+        M = cv2.getPerspectiveTransform(src_points.astype(np.float32), dst_points.astype(np.float32))
+        rectified_image = cv2.warpPerspective(np.array(image), M, (image_width, image_height))
+        return cv2.resize(rectified_image, [250,50])
+
+    def run_full_pipeline(self, images, transform=None, batch_size=16):
+
+        print("Prepairing Images ... \n")
+
+        if isinstance(images, (np.ndarray, Image.Image, torch.Tensor)):
+            # Single image pipeline
+            images = [images]  # Convert single image to list format
+
+        if transform == None: 
+            transform = transforms.Compose(
+                [transforms.Resize((224, 224)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
+            )
+        
+        transformed_images = [None] * len(images)
+        for i, image in enumerate(images):
+            images[i] = self.to_pil(image)
+            transformed_images[i] = transform(images[i])
+
+        print("Running full pipeline ... \n")
+        rectified_images = []
+
+        for i, batch in enumerate(self.batch_images(images ,transformed_images, batch_size)):
+            imgs, imgs_t = batch
+            imgs_t = torch.stack(imgs_t)
+            corners = self.run_inference(imgs_t)
+            corners = corners.cpu().numpy()
+            corners[np.where(corners>=1)] = 1
+            corners[np.where(corners<=0)] = 0
+            print(f"Corner points found for batch {i} \n")
+            for i, img in enumerate(imgs):
+                rectified_images.append(self.rectify(img, corners[i]))
+            print(f"Rectified images in batch {i} appended to the results \n")
+
+        return rectified_images
