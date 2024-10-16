@@ -59,23 +59,28 @@ class YOLOv8(BaseModel):
 class CustomResNet(nn.Module):
     """
     A custom ResNet18-based model that allows for dynamic classifier modification 
-    and freezing/unfreezing of the feature extractor (ResNet18 backbone).
+    and freezing/unfreezing of the feature extractor (ResNet50 backbone).
     """
-    def __init__(self, weights=models.ResNet18_Weights.IMAGENET1K_V1):
+    def __init__(self, weights=models.ResNet50_Weights.IMAGENET1K_V2):
         super(CustomResNet, self).__init__()
         """
         Initialize the CustomResNet model with a ResNet18 backbone and custom fully connected layers.
         
         Parameters:
-        weights (torchvision.models.ResNet18_Weights, optional): Pretrained weights for the ResNet18 model. 
-                                                                  Default is IMAGENET1K_V1.
+        weights (torchvision.models.ResNet18_Weights, optional): Pretrained weights for the ResNet50 model. 
+                                                                  Default is IMAGENET1K_V2.
         """
-        self.feature = models.resnet18(weights=weights)
+        self.feature = models.resnet50(weights=weights)
         self.feature.fc = nn.Dropout(0.2)
         self.mlp = nn.Sequential(
-            nn.Linear(in_features=512, out_features=128), 
+            nn.Linear(in_features=2048, out_features=512),
+            nn.BatchNorm1d(512),
+            nn.SiLU(),
+            nn.Linear(in_features=512, out_features=128),
+            nn.BatchNorm1d(128),
             nn.SiLU(),
             nn.Linear(in_features=128, out_features=32),
+            nn.BatchNorm1d(32),
             nn.SiLU()
         )
         self.fc0 = nn.Linear(in_features=32, out_features=2)
@@ -101,14 +106,14 @@ class Plate_ResNet(BaseModel):
     """
     def __init__(self,
                  model_type:ResNetType=ResNetType.Base,
-                 weigths:models.ResNet18_Weights=models.ResNet18_Weights.IMAGENET1K_V1,
+                 weigths:models.ResNet50_Weights=models.ResNet50_Weights.IMAGENET1K_V2,
                  device='cpu'):
         """
         Initialize the Plate_ResNet model with a specific ResNet type, pretrained weights, and device.
 
         Parameters:
         model_type (ResNetType, optional): The type of ResNet model to use (e.g., Base, Custom). Default is Base.
-        weigths (torchvision.models.ResNet18_Weights, optional): Pretrained weights for the model. Default is ResNet18 weights from ImageNet.
+        weigths (torchvision.models.ResNet18_Weights, optional): Pretrained weights for the model. Default is ResNet50 weights from ImageNet.
         device (str, optional): The device on which to run the model (e.g., 'cpu', 'cuda'). Default is 'cpu'.
         """
         self.model_type = model_type
@@ -130,7 +135,7 @@ class Plate_ResNet(BaseModel):
             resnet.load_state_dict(torch.load(self.model_type.value, 
                                               map_location=torch.device(self.device), 
                                               weights_only=True))
-        print("ResNet18")
+        print("ResNet50")
         print(summary(resnet), '\n')
         return resnet
         

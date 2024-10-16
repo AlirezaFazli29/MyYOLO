@@ -12,6 +12,8 @@
 
 /weights
     ├── ---.pt  
-    └── ---.pt   
+    ├── ---.pt   
+    ├── ---.pth  
+    └── ---.pth  
 
 test_notebook.ipynb
