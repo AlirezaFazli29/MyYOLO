@@ -164,7 +164,7 @@ class PlateResNetInference():
             yield images[i:i+batch_size], transformed_images[i:i+batch_size]
 
     def rectify(self, image:Image.Image, corner_points:np.ndarray):
-        image_width, image_height = np.array(image).shape[:2]
+        image_height, image_width = np.array(image).shape[:2]
         dst_points = np.array([[0, 0], [image_width, 0], [image_width, image_height], [0, image_height]], dtype=np.float32)
         src_points  = corner_points * np.array([image_width, image_height])
         M = cv2.getPerspectiveTransform(src_points.astype(np.float32), dst_points.astype(np.float32))

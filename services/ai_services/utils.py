@@ -74,26 +74,13 @@ class CustomResNetDataset(Dataset):
             raw_lbl = file.read()
         raw_lbl = raw_lbl.split(' ')[1:-2]
         raw_lbl = np.array(raw_lbl, dtype=float).reshape((4,2))
-        argsorted = raw_lbl.argsort(axis=0)
-        x_y = raw_lbl.copy()
-        for i in range(len(argsorted.transpose())):
-            x_y[argsorted.transpose()[i,:2],i] = 0
-            x_y[argsorted.transpose()[i,-2:],i] = 1
+
         label = {
-            "Top Left": [0., 0.],
-            "Top Right": [223., 0.],
-            "Bottom Right": [223., 223.],
-            "Bottom Left": [0., 223.]
+            "Top Left": list(raw_lbl[np.sqrt(np.sum((raw_lbl - np.array([0, 0])) ** 2, axis=1)).argmin()]),
+            "Top Right": list(raw_lbl[np.sqrt(np.sum((raw_lbl - np.array([1, 0])) ** 2, axis=1)).argmin()]),
+            "Bottom Right": list(raw_lbl[np.sqrt(np.sum((raw_lbl - np.array([1, 1])) ** 2, axis=1)).argmin()]),
+            "Bottom Left": list(raw_lbl[np.sqrt(np.sum((raw_lbl - np.array([0, 1])) ** 2, axis=1)).argmin()])
         }
-        for i in range(len(raw_lbl)):
-            if np.array_equal(x_y[i], [0., 0.]):
-                label["Top Left"] = list(raw_lbl[i])
-            elif np.array_equal(x_y[i], [1., 0.]):
-                label["Top Right"] = list(raw_lbl[i])
-            elif np.array_equal(x_y[i], [1., 1.]):
-                label["Bottom Right"] = list(raw_lbl[i])
-            elif np.array_equal(x_y[i], [0., 1.]):
-                label["Bottom Left"] = list(raw_lbl[i])
         
         return image, torch.tensor([label["Top Left"], 
                                     label["Top Right"], 
