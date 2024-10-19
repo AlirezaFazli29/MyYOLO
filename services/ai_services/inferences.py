@@ -142,9 +142,10 @@ class PlateResNetInference():
     
     def __init__(self, custom_resnet):
         self.model = custom_resnet
+        self.device = self.model.device
 
     def run_inference(self, batch):
-        results = self.model.infer(batch)
+        results = self.model.infer(batch.to(self.device))
         return results
     
     def to_pil(self, image):

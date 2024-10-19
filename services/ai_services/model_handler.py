@@ -26,6 +26,13 @@ class ResNetType(Enum):
     Base = 'base'
 
 
+class UNetType(Enum):
+    """Enumeration for model types."""
+    Corner_last = 'weights/last_custom_u.pth'
+    Corner_best = 'weights/last_custom_u.pth'
+    Base = 'base'
+
+
 class BaseModel(ABC):
     """
     Base class for models.
