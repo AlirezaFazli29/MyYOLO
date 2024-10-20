@@ -7,7 +7,10 @@ from torchinfo import summary
 from .utils import train_custom_resnet, train_custom_unet
 import time
 import segmentation_models_pytorch as smp
+import warnings
 
+
+warnings.filterwarnings("ignore", message="TypedStorage is deprecated")
 
 
 class YOLOv8(BaseModel):

@@ -4,6 +4,7 @@ from torchvision.transforms import transforms
 from PIL import Image
 import torch
 import cv2
+import warnings
 
 
 class YOLOInference():
@@ -139,16 +140,42 @@ class YOLOInference():
     
 
 class PlateResNetInference():
-    
+    """
+    A class to handle ResNet model inference and related operations.
+    """
     def __init__(self, custom_resnet):
+        """Initializes the inference class with a custom ResNet model.
+        
+        Args:
+            custom_resnet: An instance of the custom ResNet model to be used for inference.
+        """
         self.model = custom_resnet
         self.device = self.model.device
 
     def run_inference(self, batch):
+        """Runs inference on a batch of images.
+        
+        Args:
+            batch: A batch of images (torch.Tensor) to run inference on.
+        
+        Returns:
+            results: The model's predictions for the input batch.
+        """
         results = self.model.infer(batch.to(self.device))
         return results
     
     def to_pil(self, image):
+        """Converts an image to a PIL Image.
+        
+        Args:
+            image: An input image, which can be a PIL Image, numpy array, or torch Tensor.
+        
+        Returns:
+            A PIL Image.
+        
+        Raises:
+            TypeError: If the input is not one of the accepted types.
+        """
         if isinstance(image, Image.Image):
             return image
         elif isinstance(image, np.ndarray):
@@ -160,11 +187,29 @@ class PlateResNetInference():
             raise TypeError("Input must be a PIL Image, numpy array, or torch tensor.")
 
     def batch_images(self, images, transformed_images, batch_size=16):
-        """Split images into batches."""
+        """Splits images into batches of a specified size.
+        
+        Args:
+            images: A list of images to be batched.
+            transformed_images: A list of transformed images corresponding to the input images.
+            batch_size: The size of each batch (default is 16).
+        
+        Yields:
+            A tuple containing a batch of images and their corresponding transformed images.
+        """
         for i in range(0, len(images), batch_size):
             yield images[i:i+batch_size], transformed_images[i:i+batch_size]
 
     def rectify(self, image:Image.Image, corner_points:np.ndarray):
+        """Applies a perspective transform to rectify the image based on detected corner points.
+        
+        Args:
+            image: The input image to be rectified (PIL Image).
+            corner_points: Detected corner points (numpy array) scaled to the image dimensions.
+        
+        Returns:
+            rectified_image: The rectified image resized to (250, 50) pixels.
+        """
         image_height, image_width = np.array(image).shape[:2]
         dst_points = np.array([[0, 0], [image_width, 0], [image_width, image_height], [0, image_height]], dtype=np.float32)
         src_points  = corner_points * np.array([image_width, image_height])
@@ -173,7 +218,16 @@ class PlateResNetInference():
         return cv2.resize(rectified_image, [250,50])
 
     def run_full_pipeline(self, images, transform=None, batch_size=16):
-
+        """Processes images through the full inference and rectification pipeline.
+        
+        Args:
+            images: A single image or a list of images to be processed.
+            transform: An optional transformation to apply to the images before inference.
+            batch_size: The size of each batch (default is 16).
+        
+        Returns:
+            rectified_images: A list of rectified images obtained from the original images.
+        """
         print("Prepairing Images ... \n")
 
         if isinstance(images, (np.ndarray, Image.Image, torch.Tensor)):
@@ -205,6 +259,158 @@ class PlateResNetInference():
             print(f"Corner points found for batch {i} \n")
             for i, img in enumerate(imgs):
                 rectified_images.append(self.rectify(img, corners[i]))
+            print(f"Rectified images in batch {i} appended to the results \n")
+
+        return rectified_images
+    
+
+class PlateUNetInference():
+    """
+    A class to handle UNet model inference and related operations.
+    """
+    def __init__(self, custom_unet):
+        """Initializes the inference class with a custom UNet model.
+        
+        Args:
+            custom_resnet: An instance of the custom ResNet model to be used for inference.
+        """
+        self.model = custom_unet
+        self.device = self.model.device
+
+    def run_inference(self, batch):
+        """Runs inference on a batch of images.
+        
+        Args:
+            batch: A batch of images (torch.Tensor) to run inference on.
+        
+        Returns:
+            results: The model's predictions for the input batch.
+        """
+        results = self.model.infer(batch.to(self.device))
+        return results
+    
+    def to_pil(self, image):
+        """Converts an image to a PIL Image.
+        
+        Args:
+            image: An input image, which can be a PIL Image, numpy array, or torch Tensor.
+        
+        Returns:
+            A PIL Image.
+        
+        Raises:
+            TypeError: If the input is not one of the accepted types.
+        """
+        if isinstance(image, Image.Image):
+            return image
+        elif isinstance(image, np.ndarray):
+            return Image.fromarray(image)
+        elif isinstance(image, torch.Tensor):
+            image = image.permute(1, 2, 0)
+            return Image.fromarray(image.numpy().astype(np.uint8))
+        else:
+            raise TypeError("Input must be a PIL Image, numpy array, or torch tensor.")
+        
+    def batch_images(self, images, transformed_images, batch_size=16):
+        """Splits images into batches of a specified size.
+        
+        Args:
+            images: A list of images to be batched.
+            transformed_images: A list of transformed images corresponding to the input images.
+            batch_size: The size of each batch (default is 16).
+        
+        Yields:
+            A tuple containing a batch of images and their corresponding transformed images.
+        """
+        for i in range(0, len(images), batch_size):
+            yield images[i:i+batch_size], transformed_images[i:i+batch_size]
+
+    def rectify(self, image:Image.Image, segmentation_result:np.ndarray):
+        """Applies a perspective transformation to rectify the plate from the segmentation result.
+        
+        Args:
+            image: The input image in PIL format.
+            segmentation_result: The segmentation mask output from the model.
+        
+        Returns:
+            rectified_image: The rectified image of the license plate.
+        
+        Raises:
+            ValueError: If it fails to find the corners of the plate.
+        """
+        image_height, image_width = np.array(image).shape[:2]
+        segmentation_result = cv2.resize(segmentation_result, (image_width, image_height))
+        segmentation_result = (segmentation_result * 255).astype(np.uint8)
+        _, binary = cv2.threshold(segmentation_result, 127, 255, cv2.THRESH_BINARY)
+        binary = binary.astype(np.uint8)
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour = max(contours, key=cv2.contourArea)
+        hull = cv2.convexHull(contour)
+        corners = None
+        for i in np.arange(0.01, 0.055, 0.005):
+            epsilon = i * cv2.arcLength(hull, True)
+            approx = cv2.approxPolyDP(hull, epsilon, True)
+            if len(approx) == 4:
+                corners = approx.squeeze(1)
+                break
+        if corners is None:
+            warnings.warn("Could not find corners for one image in this batch. Returning original image.")
+            return np.array(image) 
+        sorted_corners = {
+            "Top Left": list(corners[np.sqrt(np.sum((corners - np.array([0, 0])) ** 2, axis=1)).argmin()]),
+            "Top Right": list(corners[np.sqrt(np.sum((corners - np.array([image_width, 0])) ** 2, axis=1)).argmin()]),
+            "Bottom Right": list(corners[np.sqrt(np.sum((corners - np.array([image_width, image_height])) ** 2, axis=1)).argmin()]),
+            "Bottom Left": list(corners[np.sqrt(np.sum((corners - np.array([0, image_height])) ** 2, axis=1)).argmin()])
+        } 
+        src_points = np.array([sorted_corners["Top Left"], 
+                               sorted_corners["Top Right"], 
+                               sorted_corners["Bottom Right"], 
+                               sorted_corners["Bottom Left"]], dtype=np.float32)
+        dst_points = np.array([[0, 0], [image_width, 0], [image_width, image_height], [0, image_height]], dtype=np.float32)
+        M = cv2.getPerspectiveTransform(src_points.astype(np.float32), dst_points.astype(np.float32))
+        rectified_image = cv2.warpPerspective(np.array(image), M, (image_width, image_height))
+        return cv2.resize(rectified_image, [250,50])
+
+    def run_full_pipeline(self, images, transform=None, batch_size=16):
+        """Runs the full pipeline for inference, rectification, and batching.
+        
+        Args:
+            images: A list of images or a single image to process.
+            transform: Optional transformation to apply to the images.
+            batch_size: The batch size to use for processing (default is 16).
+        
+        Returns:
+            rectified_images: A list of rectified images for each input.
+        """
+        print("Prepairing Images ... \n")
+
+        if isinstance(images, (np.ndarray, Image.Image, torch.Tensor)):
+            # Single image pipeline
+            images = [images]  # Convert single image to list format
+
+        if transform == None: 
+            transform = transforms.Compose(
+                [transforms.Resize((256, 256)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
+            )
+        
+        transformed_images = [None] * len(images)
+        for i, image in enumerate(images):
+            images[i] = self.to_pil(image)
+            transformed_images[i] = transform(images[i])
+
+        print("Running full pipeline ... \n")
+
+        rectified_images = []
+
+        for i, batch in enumerate(self.batch_images(images ,transformed_images, batch_size)):
+            imgs, imgs_t = batch
+            imgs_t = torch.stack(imgs_t)
+            plate_segments = self.run_inference(imgs_t)
+            plate_segments = plate_segments.squeeze(1).cpu().numpy()
+            for j, img in enumerate(imgs):
+                rectified_images.append(self.rectify(img, plate_segments[j]))
             print(f"Rectified images in batch {i} appended to the results \n")
 
         return rectified_images
