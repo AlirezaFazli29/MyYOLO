@@ -5,7 +5,7 @@ To get started with this project, please follow these steps:
 1. Clone the repository:
    Use the following command to download the project:
    ```bash
-   git pull <repository-url>
+   git pull https://github.com/AlirezaFazli29/MyYOLO.git
 
 2. Create a virtual environment: Run the command below to create a virtual environment:
    ```bash
