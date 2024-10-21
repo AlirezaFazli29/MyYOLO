@@ -1,5 +1,5 @@
 import numpy as np
-from services.image_handler.utils import crop_image
+from services.image_handler.utils import crop_image, convert_to_rgb
 from torchvision.transforms import transforms
 from PIL import Image
 import torch
@@ -39,6 +39,22 @@ class YOLOInference():
         results = self.yolo_model.infer(image, show=show, conf=conf, save=save)
         return results
 
+    def plot_images(self, results, RGB=True):
+        """
+        Extract plotted plates around the location of plates from multiple YOLO inference results.
+
+        Parameters:
+        results (list of ultralytics.yolo.engine.results.Result): A list of YOLO inference results.
+
+        Returns:
+        list: A list containing results plot images.
+        """
+        p = [None] * len(results)
+        for i, result in enumerate(results):
+            p[i] = result.plot()
+            p[i] = convert_to_rgb(p[i]) if RGB else p[i]
+        return p
+
     def extract_image_bounding_boxes(self, result):
         """
         Extract bounding boxes from a single inference result.
@@ -68,7 +84,7 @@ class YOLOInference():
             bb[i] = self.extract_image_bounding_boxes(result)
         return bb
 
-    def crop_image_bounding_boxes(self, bounding_box_array, image):
+    def crop_image_bounding_boxes(self, bounding_box_array, image, RGB=True):
         """
         Crop an image using a list of bounding boxes.
 
@@ -79,12 +95,15 @@ class YOLOInference():
         Returns:
         list of numpy.ndarray: A list of cropped image sections corresponding to each bounding box.
         """
+        if isinstance(image, Image.Image):
+            image = np.array(image)
         cropped = [None]*len(bounding_box_array)
         for i,bb in enumerate(bounding_box_array):
             cropped[i] = crop_image(image, bb)
+            cropped[i] = convert_to_rgb(cropped[i]) if RGB else cropped[i]
         return cropped
 
-    def crop_results_bounding_boxes(self, results_bounding_boxes, images):
+    def crop_results_bounding_boxes(self, results_bounding_boxes, images, RGB=True):
         """
         Crop multiple images using bounding boxes from YOLO inference results.
 
@@ -97,7 +116,7 @@ class YOLOInference():
         """
         cropped_images = []
         for i,image in enumerate(images):
-            cropped = self.crop_image_bounding_boxes(results_bounding_boxes[i], image)
+            cropped = self.crop_image_bounding_boxes(results_bounding_boxes[i], image, RGB=RGB)
             if i==0: cropped_images = cropped
             else: cropped_images += cropped
         return cropped_images
@@ -109,34 +128,49 @@ class YOLOInference():
 
     def run_full_pipeline(self, images, conf=0.5, show=False, save=False, batch_size=16):
         """
-        Run the full pipeline: inference, bounding box extraction, and cropping images.
+        Run the full pipeline for YOLO-based license plate detection, bounding box extraction, 
+        and cropping the plates from the images.
         
         Parameters:
-        images (numpy.ndarray or list of numpy.ndarray): The input image or list of images to process.
-        conf (float, optional): Confidence threshold for predictions. Defaults to 0.5.
-        show (bool, optional): If True, displays the image with bounding boxes. Defaults to False.
-        save (bool, optional): If True, saves the inference results. Defaults to False.
+        images (numpy.ndarray, PIL.Image.Image, torch.Tensor, or list of any of these): 
+            The input image or a list of images to process. Supports single image or batch of images.
+        conf (float, optional): 
+            Confidence threshold for YOLO model predictions. Bounding boxes with lower confidence
+            are filtered out. Defaults to 0.5.
+        show (bool, optional): 
+            If True, display the images with bounding boxes drawn on the plates. Defaults to False.
+        save (bool, optional): 
+            If True, saves the inference results with bounding boxes drawn. Defaults to False.
+        batch_size (int, optional): 
+            The number of images to process in each batch. Defaults to 16.
         
         Returns:
-        list of numpy.ndarray: A list of cropped image sections based on bounding box coordinates.
+        list of numpy.ndarray: 
+            A list of cropped images, where each image corresponds to a detected license plate.
+        list of numpy.ndarray:
+            A list of images with bounding boxes drawn, ready to be displayed or saved.
         """
-        if isinstance(images, np.ndarray):
+        if isinstance(images, (np.ndarray, Image.Image, torch.Tensor)):
             # Single image pipeline
             images = [images]  # Convert single image to list format
         
         print("Running full pipeline ... \n")
         cropped_images = []
+        plot_images = []
 
         for i, batch in enumerate(self.batch_images(images, batch_size)):
             results = self.run_inference(batch, conf=conf, show=show, save=save)
             print(f"Yolo results are generated for batch {i} \n")
+            plot_imgs = self.plot_images(results)
+            print("Found Plate locations")
             bounding_boxes = self.extract_results_bounding_boxes(results)
             print("Found Bounding Boxes")
             batch_cropped_images = self.crop_results_bounding_boxes(bounding_boxes, batch)
             print("Images were cropped \n")
             cropped_images.extend(batch_cropped_images)
+            plot_images.extend(plot_imgs)
         print("All images were cropped successfully")
-        return cropped_images
+        return cropped_images, plot_images
     
 
 class PlateResNetInference():

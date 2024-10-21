@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container-box">
+        <h2>License Plate Processing Options</h2> <!-- Header above the buttons -->
+        <div class="buttons-box">
+            <p>Here are options to test the models separately:</p>
+            <div class="buttons">
+                <button onclick="location.href='/yolo'">YOLO Detection</button>
+                <button onclick="location.href='/unet'">U-Net Rectification</button>
+            </div>
+        </div>
+        <div class="full-pipeline-box">
+            <p>Run full detection and rectification:</p>
+            <div class="full-pipeline">
+                <button onclick="location.href='/full_pipeline'">Run Full Pipeline</button>
+            </div>
+        </div>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <div class="button-container">
+            <button onclick="window.location.href='/'">Main Page</button>
+            <button onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+</body>
+</html>

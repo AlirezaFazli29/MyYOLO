@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Net Rectification</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container-box">
+        <h2>U-Net License Plate Rectification</h2>
+        <form action="/unet_process" method="post" enctype="multipart/form-data">
+            <div class="upload-section">
+                <label for="file">Upload License Plate Image:</label>
+                <input type="file" id="file" name="file" accept="image/*" required>
+            </div>
+            <div>
+                <button type="submit" class="yolo-button">Run U-Net Rectification</button>
+            </div>
+        </form>
+        <p></p>
+        <p></p>
+        <p></p>
+        <div class="button-container">
+            <button onclick="window.location.href='/'">Main Page</button>
+            <button onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+</body>
+</html>

@@ -16,4 +16,17 @@
     ├── ---.pth  
     └── ---.pth  
 
+/static
+    └── style.css
+
+/templates
+    ├── full_pipeline_results.html
+    ├── full_pipeline.html
+    ├── index.html 
+    ├── unet_results.html
+    ├── unet.html
+    ├── yolo_results.html   
+    └── yolo.html  
+
+app.py
 test_notebook.ipynb

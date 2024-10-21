@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Pipeline</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container-box">
+        <h2>Run Full Pipeline</h2>
+        <form action="/full_pipeline_process" method="post" enctype="multipart/form-data">
+            <div class="upload-section">
+                <label for="file">Upload Image:</label>
+                <input type="file" id="file" name="file" accept="image/*" required>
+            </div>
+            <div class="upload-section">
+                <label for="conf_threshold">Confidence Threshold:</label>
+                <input type="number" id="conf_threshold" name="conf_threshold" step="0.05" min="0" max="1" value="0.7" required>
+            </div>
+            <div>
+                <button type="submit" class="yolo-button">Run Full Pipeline</button>
+            </div>
+        </form>
+        <p></p>
+        <p></p>
+        <p></p>
+        <div class="button-container">
+            <button onclick="window.location.href='/'">Main Page</button>
+            <button onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+</body>
+</html>

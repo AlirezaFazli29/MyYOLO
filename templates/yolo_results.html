@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Results</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container-box">
+        <h2>YOLO Detection Results</h2>
+        <p class="grey-text">Image with Detected Plates:</p>
+        <div>
+            <img src="data:image/png;base64,{{ image_with_boxes }}" alt="Image with Bounding Boxes" />
+        </div>
+
+        <h3 class="grey-text">Cropped Plates:</h3>
+        <div>
+            {% for plate in cropped_plates %}
+            <div>
+                <img src="data:image/png;base64,{{ plate }}" alt="Cropped Plate" />
+            </div>
+            {% endfor %}
+        </div>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <div class="button-container">
+            <button onclick="window.location.href='/'">Main Page</button>
+            <button onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U-Net Results</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container-box">
+        <h2>U-Net Rectification Results</h2>
+        <p class="grey-text">Original and Rectified License Plates:</p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div>
+                <p class="grey-text">Original Image:</p>
+                <img src="data:image/png;base64,{{ original_image }}" alt="Original License Plate" />
+            </div>
+            <div style="margin-top: 20px;">
+                <p class="grey-text">Rectified Image:</p>
+                <img src="data:image/png;base64,{{ rectified_image }}" alt="Rectified License Plate" />
+            </div>
+        </div>
+        <div class="button-container">
+            <button onclick="window.location.href='/'">Main Page</button>
+            <button onclick="window.history.back()">Go Back</button>
+        </div>
+    </div>
+</body>
+</html>
