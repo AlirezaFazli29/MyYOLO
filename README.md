@@ -2,7 +2,7 @@
 
 To get started with this project, please follow these steps:
 
-1. =Clone the repository:
+1. Clone the repository:
    Use the following command to download the project:
    ```bash
    git pull <repository-url>
